@@ -1,1 +1,1 @@
-A simple command-line application.
+An API wrapper for the VNDB API written in Dart. Made with Flutter development in mind.
