@@ -6,7 +6,7 @@ import 'dart:async';
 class VndbInstance {
   final String eot = String.fromCharCode(0x04);
   Socket? socket;
-
+  String? serverResponse;
   Future<void> connect() async {
     socket = await Socket.connect('api.vndb.org', 19534);
     if (socket != null) {
@@ -15,6 +15,12 @@ class VndbInstance {
     } else {
       print('Connection failed');
     }
+
+    StreamSubscription<Uint8List>? streamSubscription;
+    streamSubscription = socket?.listen((Uint8List data) {
+      serverResponse = String.fromCharCodes(data);
+      print('Server: $serverResponse');
+    });
   }
 
   Future<void> closeConnection() async {
@@ -29,19 +35,25 @@ class VndbInstance {
     String? username,
     String? password,
   }) async {
-    String serverResponse = '';
-    StreamSubscription<Uint8List>? streamSubscription;
-
-    streamSubscription = socket?.listen((Uint8List data) {
-      serverResponse = String.fromCharCodes(data);
-      print('Server: $serverResponse');
-      streamSubscription?.cancel();
-    });
-
     final query = LoginQuery(
         protocol: protocol, client: client, clientVersion: clientversion);
     socket?.write('login ${jsonEncode(query.toJson())}$eot');
-    print(serverResponse);
+  }
+
+  Future<void> getVNs({
+    List<int>? id,
+    String? title,
+    String? original,
+    String? firstchar,
+    String? released,
+    List<String>? platforms,
+    List<String>? languages,
+    String? originalLanguage,
+    String? search,
+    List<int>? tags,
+  }) async {
+    final requestString = 'get vn basic (id = $id)$eot';
+    socket?.write(requestString);
   }
 }
 
@@ -51,7 +63,7 @@ void main(List<String> arguments) async {
   print('Connected!');
 
   await instance.login(protocol: 1, client: 'MIKAELCG', clientversion: '1.0');
-
+  await instance.getVNs(id: <int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   await instance.closeConnection();
 }
 
@@ -116,3 +128,5 @@ class LoginQuery {
         'clientver': clientVersion,
       };
 }
+
+class GetVNQuery {}
